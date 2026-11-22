@@ -22,7 +22,7 @@ from .serializers import (
     LibroSerializer,
     LibroOperacionSerializer,
 )
-
+from .permissions import IsAdminOrReadOnly
 
 # Vista para administrar usuarios
 # Vista para registrar clientes
@@ -40,30 +40,35 @@ class UserViewSet(
 class EditorialViewSet(viewsets.ModelViewSet):
     queryset = Editorial.objects.all()
     serializer_class = EditorialSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 
 # Vista para administrar autores
 class AutorViewSet(viewsets.ModelViewSet):
     queryset = Autor.objects.all()
     serializer_class = AutorSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 
 # Vista para administrar categorías
 class CategoriaViewSet(viewsets.ModelViewSet):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 
 # Vista para administrar libros
 class LibroViewSet(viewsets.ModelViewSet):
     queryset = Libro.objects.all()
     serializer_class = LibroSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 
 # Vista para administrar operaciones de libros
 class LibroOperacionViewSet(viewsets.ModelViewSet):
     queryset = LibroOperacion.objects.all()
     serializer_class = LibroOperacionSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 # Vista para iniciar sesión con usuarios personalizados
 class LoginView(APIView):

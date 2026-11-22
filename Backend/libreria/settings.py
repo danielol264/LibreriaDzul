@@ -25,7 +25,11 @@ SECRET_KEY = 'django-insecure-%lw8oj)hyw$)@s7@o+smtu4!+gpgonf%dw&m2y974z1dqpf)s3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '192.168.1.69',
+]
 
 
 # Application definition
@@ -138,14 +142,8 @@ REST_FRAMEWORK = {
     # Métodos de autenticación que utilizará la API
     'DEFAULT_AUTHENTICATION_CLASSES': [
 
-        # Permite autenticación mediante sesiones de Django
-        'rest_framework.authentication.SessionAuthentication',
-
-        # Permite autenticación mediante usuario y contraseña
-        'rest_framework.authentication.BasicAuthentication',
-
-        # Permite autenticación mediante token
-        'rest_framework.authentication.TokenAuthentication',
+        # Autenticación mediante nuestro token personalizado
+        'quickstart.authentication.CustomTokenAuthentication',
     ],
 
     # Permisos predeterminados de la API
@@ -155,3 +153,4 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+

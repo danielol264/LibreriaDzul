@@ -11,6 +11,16 @@ class User(models.Model):
     rol = models.CharField(max_length=20, choices=ROL)
     modificationDate = models.DateTimeField(auto_now=True)
     activo = models.BooleanField(default=True)
+    
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    
 
 
 class Autor(models.Model):
