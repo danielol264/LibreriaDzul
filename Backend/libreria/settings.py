@@ -37,6 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'rest_framework',
+    'rest_framework.authtoken',
+
+    'quickstart',
+    
 ]
 
 MIDDLEWARE = [
@@ -124,4 +130,28 @@ MAILERS = {
     'default': {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
+}
+
+# Configuración de Django REST Framework
+REST_FRAMEWORK = {
+
+    # Métodos de autenticación que utilizará la API
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+
+        # Permite autenticación mediante sesiones de Django
+        'rest_framework.authentication.SessionAuthentication',
+
+        # Permite autenticación mediante usuario y contraseña
+        'rest_framework.authentication.BasicAuthentication',
+
+        # Permite autenticación mediante token
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+
+    # Permisos predeterminados de la API
+    'DEFAULT_PERMISSION_CLASSES': [
+
+        # Solamente usuarios autenticados podrán acceder
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }

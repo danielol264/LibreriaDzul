@@ -58,3 +58,22 @@ class LibroOperacion(models.Model):
     fechaInicio = models.DateTimeField(auto_now_add=True)
     fechaTermino = models.DateTimeField(null=True, blank=True)
     operacion = models.CharField(max_length=30, choices=OPERACIONES)
+
+# Modelo para guardar los tokens de autenticación
+class UserToken(models.Model):
+
+    # Cada usuario tendrá un token único
+    usuario = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="token"
+    )
+
+    # Clave que utilizará la aplicación móvil
+    key = models.CharField(max_length=64, unique=True)
+
+    # Fecha de creación del token
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Token de {self.usuario.user}"

@@ -1,0 +1,14 @@
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+
+# Base de datos local
+Backend/db.sqlite3
+
+# Entornos virtuales
+venv/
+.venv/
+
+# Variables y secretos
+.env
+.env.*
