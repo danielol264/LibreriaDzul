@@ -19,7 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // No usamos localhost porque Expo Go se ejecuta
 // en el teléfono y necesita acceder a la computadora.
 
-const API_URL = 'http://192.168.1.69:8000/api';
+const API_URL = 'http://192.168.1.81:8000/api';
 
 
 // =====================================================
