@@ -137,6 +137,12 @@ export default function Index() {
   // Lista de libros recibidos desde Django.
   const [libros, setLibros] = useState<any[]>([]);
 
+  // Guarda la página que estamos mostrando.
+  const [paginaActual, setPaginaActual] = useState(1);
+
+  // Indica cuántos libros queremos mostrar por página.
+  const [librosPorPagina, setLibrosPorPagina] = useState(5);
+
   // Guarda el libro que el administrador selecciona.
   const [libroSeleccionado, setLibroSeleccionado] = useState<any | null>(null);
   // Indica si estamos editando un libro.
@@ -1646,6 +1652,11 @@ export default function Index() {
                     String(libro.ISBN ?? "").toLowerCase().includes(texto)
                   );
                 })
+                .slice(
+                  (paginaActual - 1) * librosPorPagina,
+                  paginaActual * librosPorPagina
+                )
+
                 .map((libro, index) => (
 
                   <TouchableOpacity
@@ -1674,6 +1685,67 @@ export default function Index() {
                   </TouchableOpacity>
 
                 ))}
+              {/* Selector de libros por página */}
+              <View style={{ marginTop: 15, alignItems: 'center' }}>
+                <Text style={{ marginBottom: 10 }}>
+                  Libros por página:
+                </Text>
+
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    style={styles.boton}
+                    onPress={() => {
+                      setLibrosPorPagina(5);
+                      setPaginaActual(1);
+                    }}
+                  >
+                    <Text style={styles.textoBoton}>5</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.boton}
+                    onPress={() => {
+                      setLibrosPorPagina(10);
+                      setPaginaActual(1);
+                    }}
+                  >
+                    <Text style={styles.textoBoton}>10</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.boton}
+                    onPress={() => {
+                      setLibrosPorPagina(20);
+                      setPaginaActual(1);
+                    }}
+                  >
+                    <Text style={styles.textoBoton}>20</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              {/* Botones para cambiar de página */}
+              <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 15 }}>
+
+                <TouchableOpacity
+                  style={styles.boton}
+                  onPress={() => setPaginaActual(paginaActual - 1)}
+                  disabled={paginaActual === 1}
+                >
+                  <Text style={styles.textoBoton}>Anterior</Text>
+                </TouchableOpacity>
+
+                <Text style={{ marginHorizontal: 15, alignSelf: 'center' }}>
+                  Página {paginaActual}
+                </Text>
+
+                <TouchableOpacity
+                  style={styles.boton}
+                  onPress={() => setPaginaActual(paginaActual + 1)}
+                >
+                  <Text style={styles.textoBoton}>Siguiente</Text>
+                </TouchableOpacity>
+
+              </View>
 
             </View>
 
@@ -2166,10 +2238,8 @@ export default function Index() {
         </View >
       </Modal >
       {/* ==========================================
-
     SECCIÓN CONFIGURACIÓN
-
-        ========================================== */}
+========================================== */}
 
       {seccion === 'Configuración' && (
 
@@ -2180,12 +2250,64 @@ export default function Index() {
           </Text>
 
           <Text style={styles.textoTarjeta}>
-            Ajustes generales de Librería Dzul.
+            Información general de LibreriaDzul.
           </Text>
 
-          <Text style={styles.textoInformativo}>
-            Aplicación conectada al sistema de libros.
-          </Text>
+          <View style={{ marginTop: 20 }}>
+
+            <Text style={styles.etiqueta}>
+              Nombre de la aplicación
+            </Text>
+
+            <Text style={styles.textoInformativo}>
+              LibreriaDzul
+            </Text>
+
+          </View>
+
+          <View style={{ marginTop: 15 }}>
+
+            <Text style={styles.etiqueta}>
+              Versión
+            </Text>
+
+            <Text style={styles.textoInformativo}>
+              1.0
+            </Text>
+
+          </View>
+
+          <View style={{ marginTop: 15 }}>
+
+            <Text style={styles.etiqueta}>
+              Tipo de usuario
+            </Text>
+
+            <Text style={styles.textoInformativo}>
+              Administrador
+            </Text>
+
+          </View>
+
+          <View style={{ marginTop: 20 }}>
+
+            <Text style={styles.textoTarjeta}>
+              Sistema de administración y consulta
+              de libros.
+            </Text>
+
+          </View>
+
+          <TouchableOpacity
+            style={styles.botonCerrar}
+            onPress={handleCerrarSesion}
+          >
+
+            <Text style={styles.textoBoton}>
+              Cerrar sesión
+            </Text>
+
+          </TouchableOpacity>
 
         </View>
 
@@ -2383,7 +2505,7 @@ const styles = StyleSheet.create({
   // Espaciado interior.
   contenidoInterior: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
 
   // Contenedor general de pantallas.
