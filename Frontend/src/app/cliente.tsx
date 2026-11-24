@@ -20,12 +20,20 @@ import {
     Alert,
 } from 'react-native';
 
+// Márgenes seguros del celular (notch, barra de estado, barra de gestos)
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+// Iconos de la barra de estado en blanco sobre el encabezado café
+import { StatusBar } from 'expo-status-bar';
+// Almacenamiento local del celular (ya está instalado en el proyecto)
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 // Funciones de consulta que ya existen en api.ts (no se modifica ese archivo)
 import {
     obtenerLibros,
     obtenerAutores,
     obtenerCategorias,
     obtenerEditoriales,
+    obtenerToken,
 } from '../services/api';
 
 
@@ -78,6 +86,9 @@ export default function Cliente({
 }: {
     onCerrarSesion: () => void;
 }) {
+    // Espacio que ocupan el notch y la barra de gestos del celular
+    const insets = useSafeAreaInsets();
+
     // ---------- Datos que vienen del backend ----------
     const [libros, setLibros] = useState<Libro[]>([]);
     const [autores, setAutores] = useState<Autor[]>([]);
@@ -98,6 +109,17 @@ export default function Cliente({
 
     // Libro que se muestra en el modal de detalles
     const [libroDetalle, setLibroDetalle] = useState<Libro | null>(null);
+
+    // ---------- Favoritos ----------
+    // Lista con los id de los libros favoritos
+    const [favoritos, setFavoritos] = useState<number[]>([]);
+
+    // true = mostrar solo favoritos
+    const [soloFavoritos, setSoloFavoritos] = useState(false);
+
+    // Llave con la que se guardan en el celular.
+    // Usa el token para que cada cliente tenga sus propios favoritos.
+    const [llaveFavoritos, setLlaveFavoritos] = useState('');
 
 
     // =====================================================
@@ -132,7 +154,51 @@ export default function Cliente({
     // Se ejecuta una sola vez al abrir la pantalla
     useEffect(() => {
         cargarDatos();
+        cargarFavoritos();
     }, []);
+
+    // =====================================================
+    // FAVORITOS (guardados en el celular)
+    // =====================================================
+
+    // Lee los favoritos guardados en AsyncStorage
+    async function cargarFavoritos() {
+        try {
+            const token = await obtenerToken();
+            const llave = `favoritos_${token}`;
+            setLlaveFavoritos(llave);
+
+            const guardados = await AsyncStorage.getItem(llave);
+
+            // AsyncStorage solo guarda texto; lo convertimos a lista
+            if (guardados) {
+                setFavoritos(JSON.parse(guardados));
+            }
+        } catch {
+            // Si falla, simplemente empezamos sin favoritos
+            setFavoritos([]);
+        }
+    }
+
+    // Agrega o quita un libro de favoritos
+    async function alternarFavorito(id: number) {
+        const nuevos = favoritos.includes(id)
+            ? favoritos.filter((f) => f !== id) // ya estaba: lo quitamos
+            : [...favoritos, id];               // no estaba: lo agregamos
+
+        setFavoritos(nuevos);
+
+        try {
+            // Guardamos la lista como texto
+            await AsyncStorage.setItem(llaveFavoritos, JSON.stringify(nuevos));
+        } catch {
+            Alert.alert('Error', 'No se pudo guardar el favorito');
+        }
+    }
+
+    function esFavorito(id: number) {
+        return favoritos.includes(id);
+    }
 
     // Al deslizar hacia abajo la lista
     function refrescar() {
@@ -177,6 +243,11 @@ export default function Cliente({
         const texto = busqueda.trim().toLowerCase();
 
         return libros.filter((libro) => {
+            // Filtro de favoritos
+            if (soloFavoritos && !favoritos.includes(libro.id)) {
+                return false;
+            }
+
             // Filtro por categoría
             if (
                 categoriaSeleccionada !== null &&
@@ -195,7 +266,7 @@ export default function Cliente({
                 nombreAutor(libro.autor).toLowerCase().includes(texto)
             );
         });
-    }, [libros, autores, busqueda, categoriaSeleccionada]);
+    }, [libros, autores, busqueda, categoriaSeleccionada, soloFavoritos, favoritos]);
 
 
     // =====================================================
@@ -207,7 +278,7 @@ export default function Cliente({
     const encabezado = (
         <View>
             {/* Encabezado de la pantalla */}
-            <View style={styles.encabezado}>
+            <View style={[styles.encabezado, { paddingTop: insets.top + 20 }]}>
                 <Text style={styles.titulo}>Librería Dzul</Text>
                 <Text style={styles.subtitulo}>
                     Bienvenido a nuestra librería
@@ -247,6 +318,24 @@ export default function Cliente({
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.filaCategorias}
             >
+                {/* Botón para ver solo favoritos */}
+                <TouchableOpacity
+                    style={[
+                        styles.chip,
+                        soloFavoritos && styles.chipActivo,
+                    ]}
+                    onPress={() => setSoloFavoritos(!soloFavoritos)}
+                >
+                    <Text
+                        style={[
+                            styles.textoChip,
+                            soloFavoritos && styles.textoChipActivo,
+                        ]}
+                    >
+                        ♥ Favoritos ({favoritos.length})
+                    </Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity
                     style={[
                         styles.chip,
@@ -325,6 +414,17 @@ export default function Cliente({
                             : 'Agotado'}
                     </Text>
                 </View>
+
+                {/* Corazón para agregar o quitar de favoritos */}
+                <TouchableOpacity
+                    style={styles.botonCorazon}
+                    onPress={() => alternarFavorito(item.id)}
+                    hitSlop={10}
+                >
+                    <Text style={styles.corazon}>
+                        {esFavorito(item.id) ? '♥' : '♡'}
+                    </Text>
+                </TouchableOpacity>
             </TouchableOpacity>
         );
     }
@@ -346,6 +446,8 @@ export default function Cliente({
 
     return (
         <View style={styles.contenedor}>
+            <StatusBar style="light" />
+
             <FlatList
                 data={librosFiltrados}
                 keyExtractor={(libro) => String(libro.id)}
@@ -353,7 +455,9 @@ export default function Cliente({
                 ListHeaderComponent={encabezado}
                 ListEmptyComponent={
                     <Text style={styles.vacio}>
-                        No se encontraron libros.
+                        {soloFavoritos
+                            ? 'Aún no tienes libros favoritos.'
+                            : 'No se encontraron libros.'}
                     </Text>
                 }
                 refreshControl={
@@ -363,7 +467,9 @@ export default function Cliente({
                     />
                 }
                 keyboardShouldPersistTaps="handled"
-                contentContainerStyle={{ paddingBottom: 30 }}
+                // Oculta el teclado al deslizar la lista
+                keyboardDismissMode="on-drag"
+                contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}
             />
 
             {/* Modal con los detalles del libro */}
@@ -371,10 +477,13 @@ export default function Cliente({
                 visible={libroDetalle !== null}
                 animationType="slide"
                 transparent
+                // En Android, el fondo oscuro cubre también la barra de estado
+                statusBarTranslucent
+                // En Android, el botón "atrás" cierra el modal
                 onRequestClose={() => setLibroDetalle(null)}
             >
                 <View style={styles.fondoModal}>
-                    <View style={styles.modal}>
+                    <View style={[styles.modal, { paddingBottom: insets.bottom + 20 }]}>
                         {libroDetalle && (
                             <ScrollView>
                                 <Portada
@@ -399,6 +508,26 @@ export default function Cliente({
                                             : 'Agotado'
                                     }
                                 />
+
+                                {/* Botón de favoritos en el detalle */}
+                                <TouchableOpacity
+                                    style={[
+                                        styles.botonFavorito,
+                                        esFavorito(libroDetalle.id) && styles.botonFavoritoActivo,
+                                    ]}
+                                    onPress={() => alternarFavorito(libroDetalle.id)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.textoFavorito,
+                                            esFavorito(libroDetalle.id) && styles.textoFavoritoActivo,
+                                        ]}
+                                    >
+                                        {esFavorito(libroDetalle.id)
+                                            ? '♥ Quitar de favoritos'
+                                            : '♡ Agregar a favoritos'}
+                                    </Text>
+                                </TouchableOpacity>
                             </ScrollView>
                         )}
 
@@ -477,7 +606,6 @@ const styles = StyleSheet.create({
     encabezado: {
         backgroundColor: '#4B2E2B',
         padding: 25,
-        paddingTop: 45,
     },
 
     titulo: {
@@ -681,6 +809,40 @@ const styles = StyleSheet.create({
         flexShrink: 1,
         textAlign: 'right',
         marginLeft: 10,
+    },
+
+    // Favoritos
+    botonCorazon: {
+        justifyContent: 'center',
+        paddingHorizontal: 8,
+    },
+
+    corazon: {
+        fontSize: 26,
+        color: '#C62828',
+    },
+
+    botonFavorito: {
+        borderWidth: 1,
+        borderColor: '#C62828',
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 15,
+    },
+
+    botonFavoritoActivo: {
+        backgroundColor: '#C62828',
+    },
+
+    textoFavorito: {
+        color: '#C62828',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+
+    textoFavoritoActivo: {
+        color: '#FFFFFF',
     },
 
     botonCerrarModal: {
