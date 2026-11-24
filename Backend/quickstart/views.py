@@ -10,6 +10,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
+
 # Importamos los modelos de nuestra aplicación
 from .models import User, Editorial, Autor, Categoria, Libro, LibroOperacion, UserToken
 
@@ -23,6 +26,10 @@ from .serializers import (
     LibroOperacionSerializer,
 )
 from .permissions import IsAdminOrReadOnly
+
+from rest_framework.decorators import action
+
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 # Vista para administrar usuarios
 # Vista para registrar clientes
@@ -59,9 +66,46 @@ class CategoriaViewSet(viewsets.ModelViewSet):
 
 # Vista para administrar libros
 class LibroViewSet(viewsets.ModelViewSet):
+
+        # Acción personalizada para consultar el estado de los libros
+    @action(detail=False, methods=['get'])
+    def status(self, request):
+        return Response({
+            'status': 'ok',
+            'mensaje': 'La API de libros funciona correctamente',
+            'total_libros': self.get_queryset().count()
+        })
+
+    # Consulta todos los libros
     queryset = Libro.objects.all()
+
+    # Serializer utilizado para los libros
     serializer_class = LibroSerializer
+
+    # Permisos de administrador y lectura
     permission_classes = [IsAdminOrReadOnly]
+
+    # Permitir recibir imágenes y datos JSON
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    # Configuración de búsqueda y filtros
+    filter_backends = [
+        SearchFilter,
+        DjangoFilterBackend,
+    ]
+
+    # Campos en los que se puede buscar
+    search_fields = [
+        'nombreLibro',
+        'ISBN',
+    ]
+
+    # Campos por los que se puede filtrar
+    filterset_fields = [
+        'autor',
+        'editorial',
+        'categoria',
+    ]
 
 
 # Vista para administrar operaciones de libros

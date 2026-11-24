@@ -26,9 +26,8 @@ SECRET_KEY = 'django-insecure-%lw8oj)hyw$)@s7@o+smtu4!+gpgonf%dw&m2y974z1dqpf)s3
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '192.168.1.69',
+'*'    
+
 ]
 
 
@@ -137,20 +136,30 @@ MAILERS = {
 }
 
 # Configuración de Django REST Framework
+# Configuración de Django REST Framework
 REST_FRAMEWORK = {
 
     # Métodos de autenticación que utilizará la API
     'DEFAULT_AUTHENTICATION_CLASSES': [
-
-        # Autenticación mediante nuestro token personalizado
         'quickstart.authentication.CustomTokenAuthentication',
     ],
 
     # Permisos predeterminados de la API
     'DEFAULT_PERMISSION_CLASSES': [
-
-        # Solamente usuarios autenticados podrán acceder
         'rest_framework.permissions.IsAuthenticated',
     ],
+
+    # Configuración para búsqueda y filtros
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ],
+
+    # Configuración de paginación
+    # Configuración de paginación configurable
+'DEFAULT_PAGINATION_CLASS': 'quickstart.pagination.LibroPagination',
+'PAGE_SIZE': 10,
 }
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 

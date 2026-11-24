@@ -84,12 +84,75 @@ class CategoriaSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+
 # Serializer para libros
 class LibroSerializer(serializers.ModelSerializer):
+
+    # Permitimos que la imagen pueda enviarse vacía
+    urlImagen = serializers.CharField(
+        required=False,
+        allow_blank=True
+    )
+
+    # Serializers anidados para mostrar información relacionada
+    autorDetalle = AutorSerializer(
+        source="autor",
+        read_only=True
+    )
+
+    editorialDetalle = EditorialSerializer(
+        source="editorial",
+        read_only=True
+    )
+
+    categoriaDetalle = CategoriaSerializer(
+        source="categoria",
+        read_only=True
+    )
+
     class Meta:
         model = Libro
         fields = "__all__"
 
+    # Validamos que el ISBN no esté registrado en otro libro
+    def validate_ISBN(self, value):
+
+        libros_existentes = Libro.objects.filter(
+            ISBN=value
+        )
+
+        # Si estamos editando, excluimos el libro actual
+        if self.instance:
+            libros_existentes = libros_existentes.exclude(
+                id=self.instance.id
+            )
+
+        if libros_existentes.exists():
+            raise serializers.ValidationError(
+                "Ya existe un libro registrado con este ISBN."
+            )
+
+        return value
+
+    # Validamos que las existencias no sean negativas
+    def validate_existencias(self, value):
+
+        if value < 0:
+            raise serializers.ValidationError(
+                "Las existencias no pueden ser negativas."
+            )
+
+        return value
+
+    # Validamos que el libro tenga al menos una página
+    def validate_paginas(self, value):
+
+        if value <= 0:
+            raise serializers.ValidationError(
+                "El número de páginas debe ser mayor que cero."
+            )
+
+        return value
 
 # Serializer para operaciones de venta o renta
 class LibroOperacionSerializer(serializers.ModelSerializer):

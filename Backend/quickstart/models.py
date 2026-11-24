@@ -47,11 +47,12 @@ class Categoria(models.Model):
 
 
 class Libro(models.Model):
-    ISBN = models.CharField(max_length=30)
+    ISBN = models.CharField(max_length=30, unique=True)
     nombreLibro = models.CharField(max_length=40)
     existencias = models.IntegerField()
     paginas = models.IntegerField()
     urlImagen=models.CharField(max_length=100)
+    imagen = models.ImageField(upload_to='libros/', blank=True, null=True)
     editorial = models.ForeignKey(Editorial, on_delete=models.CASCADE)
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
     autor = models.ForeignKey(Autor, on_delete=models.CASCADE)
